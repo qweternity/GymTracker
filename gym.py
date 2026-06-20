@@ -1,9 +1,10 @@
+from pymongo.errors import DuplicateKeyError
+
 import database
 import schemas
 from models import ExerciseEntity
 
 def create_exercise(dto: schemas.ExerciseCreate):
-    catalog = database.exercises.find()
     entity = ExerciseEntity(
         name=dto.name,
         date=dto.date,
@@ -21,21 +22,26 @@ def show_exercises():
     diary = database.exercises.find()
     result = []
     for exercise in diary:
-        entity = ExerciseEntity(
-            name=exercise["name"],
-            date=exercise["date"],
-            weight=exercise["weight"],
-            reps=exercise["reps"]
-        )
-        result.append(entity)
+        result.append({
+            "name": exercise["name"],
+            "date": exercise["date"],
+            "weight": exercise["weight"],
+            "reps": exercise["reps"]
+        })
     return result
 
-def delete_exercise(dto: schemas.ExerciseGet):
-    exercise = database.exercises.delete_one({"name": dto.name})
-    return exercise
+def delete_exercise(name: str):
+    exercise = database.exercises.delete_one({"name": name})
+    if exercise.deleted_count == 0:
+        return None
+    else:
+        return f"Exercise {name} deleted successfully"
 
 def update_exercise(dto: schemas.ExerciseUpdateWeight):
-    database.exercises.update_one(
+    result = database.exercises.update_one(
         {"name": dto.name},
         {"$set": {"weight": dto.weight, "reps": dto.reps}},
     )
+    if result.modified_count == 0:
+        return None
+    return f"Exercise {dto.name} updated successfully"

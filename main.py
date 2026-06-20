@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pygments.lexers import data
+from pymongo.errors import DuplicateKeyError
 
 import gym
 import schemas
@@ -14,8 +14,11 @@ def root():
 
 @app.post("/exercises")
 def add_exercise(data: ExerciseCreate):
-    gym.create_exercise(data)
-    return {"exercise added": data}
+    try:
+        gym.create_exercise(data)
+        return f"exercise created: {data.name}"
+    except DuplicateKeyError:
+        return {"exercise already exists": data.name}
 
 @app.get("/exercises")
 def show_exercises():
@@ -23,12 +26,16 @@ def show_exercises():
     return {"exercises": exercises}
 
 @app.delete("/exercises/{name}")
-def delete_exercise(data: ExerciseGet):
-    gym.delete_exercise(data)
-    return {"exercise deleted": data}
+def delete_exercise(name: str):
+    deleted = gym.delete_exercise(name)
+    if deleted is None:
+        return {"Exercise not found": name}
+    return {"exercise deleted": name}
 
 @app.put("/exercises/{name}")
 def update_exercise(name, data: ExerciseUpdateWeightRequest):
     dto = schemas.ExerciseUpdateWeight(name=name, weight=data.weight, reps=data.reps)
     updated = gym.update_exercise(dto)
+    if updated is None:
+        return {"Exercise not found": name}
     return {"exercise updated": updated}
