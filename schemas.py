@@ -10,11 +10,6 @@ class ExerciseCreate(BaseModel):
 class ExerciseGet(BaseModel):
     name: str
 
-class ExerciseUpdateWeight(BaseModel):
-    name: str
-    weight: float
-    reps: int
-
 class ExerciseUpdateWeightRequest(BaseModel):
     weight: float
     reps: int
